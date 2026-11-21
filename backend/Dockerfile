@@ -14,5 +14,6 @@ EXPOSE 5000
 ENV FLASK_APP=run.py
 ENV FLASK_ENV=production
 ENV DATABASE_URL=sqlite:////data/access_review.db
+ENV PORT=5000
 
-CMD ["python", "run.py"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 run:app"]

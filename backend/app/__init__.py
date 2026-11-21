@@ -1,4 +1,5 @@
-from flask import Flask
+import os
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
@@ -16,6 +17,12 @@ def create_app(config_class=None):
 
     db.init_app(app)
     CORS(app)
+
+    # Health check endpoint
+    @app.route('/api/health', methods=['GET'])
+    @app.route('/health', methods=['GET'])
+    def health_check():
+        return jsonify({'status': 'ok'}), 200
 
     from .routes.auth_routes import auth_bp
     from .routes.user_routes import user_bp
@@ -36,7 +43,6 @@ def create_app(config_class=None):
     app.register_blueprint(report_bp, url_prefix='/api/reports')
 
     with app.app_context():
-        import os
         db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
         if db_uri.startswith('sqlite:///') and not db_uri.startswith('sqlite:///:memory:'):
             file_path = db_uri.replace('sqlite:///', '')
@@ -44,5 +50,12 @@ def create_app(config_class=None):
             if dir_path:
                 os.makedirs(dir_path, exist_ok=True)
         db.create_all()
+
+        # Seed demo data automatically on startup if the database is empty
+        if not app.config.get('TESTING'):
+            from .models import User
+            if User.query.first() is None:
+                from .seed import seed
+                seed()
 
     return app

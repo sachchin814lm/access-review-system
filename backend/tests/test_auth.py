@@ -86,3 +86,22 @@ class TestLogout:
     def test_logout_requires_auth(self, client):
         resp = client.post('/api/auth/logout')
         assert resp.status_code == 401
+
+
+class TestHealth:
+    def test_health_check(self, client):
+        resp = client.get('/api/health')
+        assert resp.status_code == 200
+        assert resp.get_json()['status'] == 'ok'
+
+    def test_auto_seed_on_startup_when_empty(self):
+        from app import create_app
+        from app.models import User
+        class AutoSeedConfig:
+            TESTING = False
+            SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+            SQLALCHEMY_TRACK_MODIFICATIONS = False
+            SECRET_KEY = 'test'
+        app = create_app(AutoSeedConfig)
+        with app.app_context():
+            assert User.query.count() >= 10
