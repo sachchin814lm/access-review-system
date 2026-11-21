@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: ./backend
+    container_name: access-review-backend
+    environment:
+      - SECRET_KEY=change-me-in-production
+      - DATABASE_URL=sqlite:////data/access_review.db
+    volumes:
+      - db_data:/data
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: access-review-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:
